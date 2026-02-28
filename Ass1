@@ -1,0 +1,88 @@
+#include <iostream>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+char matrix[5][5];
+
+void taoBangMaTran(string key) {
+    string alphabet = "ABCDEFGHIKLMNOPQRSTUVWXYZ";
+    string temp = "";
+    
+    for(char c : key) temp += toupper(c == 'J' ? 'I' : c);
+    temp += alphabet;
+
+    string finalKey = "";
+    for(char c : temp) {
+        if(finalKey.find(c) == string::npos && isalpha(c)) {
+            finalKey += c;
+        }
+    }
+
+    for(int i = 0; i < 25; i++) {
+        matrix[i/5][i%5] = finalKey[i];
+    }
+}
+
+void timViTri(char c, int &hang, int &cot) {
+    if(c == 'J') c = 'I';
+    for(int i = 0; i < 5; i++) {
+        for(int j = 0; j < 5; j++) {
+            if(matrix[i][j] == toupper(c)) {
+                hang = i; cot = j;
+                return;
+            }
+        }
+    }
+}
+
+string maHoaPlayfair(string text) {
+    string refined = "";
+    for(char c : text) {
+        if(isalpha(c)) refined += toupper(c == 'J' ? 'I' : c);
+    }
+
+    string pairs = "";
+    for(int i = 0; i < refined.length(); i++) {
+        pairs += refined[i];
+        if(i + 1 < refined.length()) {
+            if(refined[i] == refined[i+1]) pairs += 'X';
+            else { pairs += refined[i+1]; i++; }
+        } else {
+            pairs += 'X'; 
+        }
+    }
+
+    string result = "";
+    for(int i = 0; i < pairs.length(); i += 2) {
+        int r1, c1, r2, c2;
+        timViTri(pairs[i], r1, c1);
+        timViTri(pairs[i+1], r2, c2);
+
+        if(r1 == r2) { 
+            result += matrix[r1][(c1+1)%5];
+            result += matrix[r2][(c2+1)%5];
+        } else if(c1 == c2) { 
+            result += matrix[(r1+1)%5][c1];
+            result += matrix[(r2+1)%5][c2];
+        } else { 
+            result += matrix[r1][c2];
+            result += matrix[r2][c1];
+        }
+    }
+    return result;
+}
+
+int main() {
+    string key = "MONARCHY";
+    string viDu = "do you like to study a cryptography course";
+
+    taoBangMaTran(key);
+    string ketQua = maHoaPlayfair(viDu);
+
+    cout << "Van ban goc: " << viDu << endl;
+    cout << "Ma hoa:      " << ketQua << endl;
+
+    return 0;
+}
