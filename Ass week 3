@@ -1,0 +1,91 @@
+#include <iostream>
+#include <iomanip>
+#include <vector>
+
+using namespace std;
+
+// m(x) = x^10 + x^3 + 1 <=> 10000001001 (nhi phân) = 1033 (thập phân)
+const int IRREDUCIBLE_POLY = 1033; 
+
+// Hàm tìm bậc của đa thức (vị trí bit cao nhất)
+int get_degree(unsigned int n) {
+    if (n == 0) return -1;
+    int deg = 0;
+    while (n >>= 1) deg++;
+    return deg;
+}
+
+// Phép nhân đa thức trong GF(2) - Carry-less multiplication
+unsigned int poly_mul(unsigned int a, unsigned int b) {
+    unsigned int res = 0;
+    for (int i = 0; i < 32; i++) {
+        if ((b >> i) & 1) res ^= (a << i);
+    }
+    return res;
+}
+
+// Phép chia đa thức trong GF(2): trả về {thương q, số dư r}
+pair<unsigned int, unsigned int> poly_divmod(unsigned int a, unsigned int b) {
+    unsigned int q = 0;
+    unsigned int r = a;
+    int deg_b = get_degree(b);
+    
+    while (get_degree(r) >= deg_b) {
+        int shift = get_degree(r) - deg_b;
+        q ^= (1 << shift);
+        r ^= (b << shift);
+    }
+    return {q, r};
+}
+
+// Thuật toán Euclidean mở rộng
+unsigned int extended_euclidean(unsigned int a) {
+    unsigned int r0 = IRREDUCIBLE_POLY, r1 = a;
+    unsigned int v0 = 0, v1 = 1;
+
+    cout << left << setw(6) << "Step" << " | " 
+         << setw(12) << "Quotient(q)" << " | " 
+         << setw(13) << "Remainder(r)" << " | " 
+         << "v (Inverse)" << endl;
+    cout << string(60, '-') << endl;
+
+    int step = 0;
+    while (r1 > 0) {
+        auto res = poly_divmod(r0, r1);
+        unsigned int q = res.first;
+        unsigned int r2 = res.second;
+        
+        // v2 = v0 ^ (q * v1) trong GF(2)
+        unsigned int v2 = v0 ^ poly_mul(q, v1);
+
+        cout << setw(6) << step << " | " 
+             << setw(12) << q << " | " 
+             << setw(13) << r1 << " | " 
+             << v1 << endl;
+
+        r0 = r1; r1 = r2;
+        v0 = v1; v1 = v2;
+        step++;
+    }
+
+    if (r0 == 1) {
+        cout << setw(6) << step << " | " << setw(12) << "-" << " | " << setw(13) << r0 << " | " << v0 << endl;
+        return v0;
+    }
+    return 0; // Không có nghịch đảo
+}
+
+int main() {
+    unsigned int test_vectors[] = {523, 1015};
+
+    for (unsigned int val : test_vectors) {
+        cout << "\n--- Tim nghich dao cua a = " << val << " trong GF(2^10) ---\n";
+        unsigned int inv = extended_euclidean(val);
+        if (inv != 0) 
+            cout << "==> Ket qua: " << val << "^-1 = " << inv << endl;
+        else 
+            cout << "==> Khong tim thay nghich dao.\n";
+    }
+
+    return 0;
+}
